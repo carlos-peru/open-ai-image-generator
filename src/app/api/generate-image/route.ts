@@ -1,20 +1,28 @@
 import { NextResponse } from "next/server";
+import * as yup from "yup";
 import openAI from "@/lib/openAI";
+import { promptSchema } from "@/validations/prompt-schema";
 
 const NUMBER_OF_IMAGES = 1;
 const IMAGE_SIZE = "256x256";
 
 export async function POST(request: Request) {
-  const { prompt } = await request.json();
+  const promptData = await request.json();
+  console.log(promptData);
 
-  if (!prompt || !prompt.trim()) {
-    return NextResponse.json(
-      {
-        error: "Invalid prompt",
-      },
-      { status: 400 }
-    );
+  try {
+    await promptSchema.validate(promptData);
+  } catch (error) {
+    if (error instanceof yup.ValidationError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+        },
+        { status: 400 }
+      );
+    }
   }
+  const { prompt } = promptData;
 
   try {
     const response = await openAI.createImage({

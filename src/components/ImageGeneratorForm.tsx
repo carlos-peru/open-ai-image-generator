@@ -16,8 +16,8 @@ import {
   FormErrorMessage,
 } from "@chakra-ui/react";
 import { useFormik } from "formik";
-import * as Yup from "yup";
 import { FaSuperpowers, FaImage } from "react-icons/fa";
+import { promptSchema } from "@/validations/prompt-schema";
 
 export default function ImageGeneratorForm() {
   const [progress, setProgress] = useState(false);
@@ -26,26 +26,21 @@ export default function ImageGeneratorForm() {
 
   const formik = useFormik({
     initialValues: {
-      description: "",
+      prompt: "",
     },
-    validationSchema: Yup.object({
-      description: Yup.string()
-        .min(1, "Must be 1 characters or more")
-        .max(50, "Must be 50 characters or less")
-        .required("The image description is required"),
-    }),
+    validationSchema: promptSchema,
     onSubmit: async (values) => {
       setUrl("");
       setError("");
       setProgress(true);
       try {
-        const { description } = values;
+        const { prompt } = values;
         const response = await fetch("/api/generate-image", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ prompt: description }),
+          body: JSON.stringify({ prompt: prompt }),
         });
 
         const data = await response.json();
@@ -78,19 +73,21 @@ export default function ImageGeneratorForm() {
         </Heading>
         <form onSubmit={formik.handleSubmit}>
           <VStack spacing={4} align="center">
-            <FormControl isInvalid={!!formik.errors.description}>
+            <FormControl isInvalid={!!formik.errors.prompt}>
               <Input
-                id="description"
-                name="description"
-                type="description"
+                id="prompt"
+                name="prompt"
+                type="prompt"
                 placeholder="Image Description"
-                data-test="description-input"
+                data-test="prompt-input"
                 variant="filled"
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                value={formik.values.description}
+                value={formik.values.prompt}
               />
-              <FormErrorMessage>{formik.errors.description}</FormErrorMessage>
+              <FormErrorMessage data-test="request-error">
+                {formik.errors.prompt}
+              </FormErrorMessage>
             </FormControl>
             <Button
               type="submit"
@@ -102,7 +99,7 @@ export default function ImageGeneratorForm() {
               Generate Image
             </Button>
             {error && (
-              <Alert status="error" data-test="request-error">
+              <Alert status="error">
                 <AlertIcon />
                 <AlertTitle>{error}</AlertTitle>
               </Alert>

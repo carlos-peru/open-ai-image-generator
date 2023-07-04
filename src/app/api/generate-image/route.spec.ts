@@ -6,7 +6,18 @@ import openAI from "@/lib/openAI";
 import { POST } from "./route";
 
 describe("generate image API", () => {
-  test("should return invalid prompt error", async () => {
+  test("empty string should return is required error", async () => {
+    const req = createRequest({
+      json: jest.fn().mockResolvedValue({ prompt: "" }),
+    });
+
+    const result = await POST(req);
+    const jsonResult = await result.json();
+
+    expect(jsonResult).toEqual({ error: "Prompt is required" });
+  });
+
+  test("white spaces should also return is required error", async () => {
     const req = createRequest({
       json: jest.fn().mockResolvedValue({ prompt: "   " }),
     });
@@ -14,7 +25,21 @@ describe("generate image API", () => {
     const result = await POST(req);
     const jsonResult = await result.json();
 
-    expect(jsonResult).toEqual({ error: "Invalid prompt" });
+    expect(jsonResult).toEqual({ error: "Prompt is required" });
+  });
+
+  test("should return length error", async () => {
+    const req = createRequest({
+      json: jest.fn().mockResolvedValue({
+        prompt:
+          "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
+      }),
+    });
+
+    const result = await POST(req);
+    const jsonResult = await result.json();
+
+    expect(jsonResult).toEqual({ error: "Must be 50 characters or less" });
   });
 
   test("should return url of generated", async () => {
